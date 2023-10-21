@@ -4,7 +4,11 @@ import io
 import sys
 import json
 import time
-import regex as re
+try:
+	import regex as re
+except:
+	os.system("pip install regex")
+	import regex as re
 from glob import glob as gl
 
 #Получение настроек из файла конфигурации
@@ -18,7 +22,9 @@ parse_zapros = config["parse_zapros"]
 folder = config["folder"]
 size = config["size"]
 file_block = config["file_block"]
-
+email_parse = config["email_parse"]
+login_parse = config["login_parse"]
+number_parse = config["number_parse"]
 #Проверка существования папки и назначение пути сохранения
 os.mkdir(folder) if not os.path.exists(folder) else None
 Result_folder = os.path.join(os.getcwd(), folder)
@@ -37,7 +43,7 @@ password_regex = re.compile(r"^[ -~]+$")
 #Функция очистки консоли
 def clear():
     os.system("cls") if os.name == "nt" else os.system("clear")
-    print("       Сортировщик url:login:password v0.4\n              сделал molodost_vnutri\n             для форума zelenka.guru\n      https://zelenka.guru/molodost_vnutri\n")
+    print("       Сортировщик url:login:password v0.5\n              сделал molodost_vnutri\n             для форума zelenka.guru\n      https://zelenka.guru/molodost_vnutri\n")
 
 #Функция проверки строки на валидность
 def is_valid_line(line):
@@ -69,69 +75,74 @@ def sorting(data, password, line, size):
         if parse_zapros == True:
             for key in zapros:
                 if key in line:
-                    if email_regex.match(data) and len(data) >= 9:
-                        email += 1
-                        if sort == 1:
-                            Dict.setdefault(f"{key}_email", []).append(f"{data}:{password}")
-                            if parse_full == True:
-                                Dict.setdefault(f"{key}_email_full_line", []).append(line)
-                        elif sort == 2:
-                            Dict.setdefault(key, []).append(f"{data}:{password}")
-                            if parse_full == True:
-                                Dict.setdefault(f"{key}_full_line", []).append(line)
-                    elif login_regex.match(data) and all(bad not in data for bad in bad_char):
-                        login += 1
-                        if sort == 1:
-                            Dict.setdefault(f"{key}_login", []).append(f"{data}:{password}")
-                            if parse_full == True:
-                                Dict.setdefault(f"{key}_login_full_line", []).append(line)
-                        elif sort == 2:
-                            Dict.setdefault(key, []).append(f"{data}:{password}")
-                            if parse_full == True:
-                                Dict.setdefault(f"{key}_full_line", []).append(line)
-                    elif number_regex.match(data) and all(bad not in data for bad in bad_char) and 6 <= len(data) <= 15:
-                        number += 1
-                        if sort == 1:
-                            Dict.setdefault(f"{key}_number", []).append(f"{data}:{password}")
-                            if parse_full == True:
-                                Dict.setdefault(f"{key}_number_full_line", []).append(line)
-                        elif sort == 2:
-                            Dict.setdefault(key, []).append(f"{data}:{password}")
-                            if parse_full == True:
-                                Dict.setdefault(f"{key}_full_line", []).append(line)
+                    if email_parse == True:
+                        if email_regex.match(data) and len(data) >= 9:
+                            email += 1
+                            if sort == 1:
+                                Dict.setdefault(f"{key}_email", []).append(f"{data}:{password}")
+                                if parse_full == True:
+                                    Dict.setdefault(f"{key}_email_full_line", []).append(line)
+                            elif sort == 2:
+                                Dict.setdefault(key, []).append(f"{data}:{password}")
+                                if parse_full == True:
+                                    Dict.setdefault(f"{key}_full_line", []).append(line)
+                    if login_parse == True:
+                        if login_regex.match(data) and all(bad not in data for bad in bad_char):
+                            login += 1
+                            if sort == 1:
+                                Dict.setdefault(f"{key}_login", []).append(f"{data}:{password}")
+                                if parse_full == True:
+                                    Dict.setdefault(f"{key}_login_full_line", []).append(line)
+                            elif sort == 2:
+                                Dict.setdefault(key, []).append(f"{data}:{password}")
+                                if parse_full == True:
+                                    Dict.setdefault(f"{key}_full_line", []).append(line)
+                    if number_parse == True:
+                        if number_regex.match(data) and all(bad not in data for bad in bad_char) and 6 <= len(data) <= 15:
+                            number += 1
+                            if sort == 1:
+                                Dict.setdefault(f"{key}_number", []).append(f"{data}:{password}")
+                                if parse_full == True:
+                                    Dict.setdefault(f"{key}_number_full_line", []).append(line)
+                            elif sort == 2:
+                                Dict.setdefault(key, []).append(f"{data}:{password}")
+                                if parse_full == True:
+                                    Dict.setdefault(f"{key}_full_line", []).append(line)
         if parse_zapros == False:
-            if email_regex.match(data) and len(data) >= 9:
-                email += 1
-                if sort == 1:
-                    Dict.setdefault("data_email", []).append(f"{data}:{password}")
-                    if parse_full == True:
-                        Dict.setdefault("data_email_full_line", []).append(line)
-                elif sort == 2:
-                    Dict.setdefault("data", []).append(f"{data}:{password}")
-                    if parse_full == True:
-                        Dict.setdefault("data_full_line", []).append(line)
-            elif login_regex.match(data) and all(bad not in data for bad in bad_char):
-                login += 1
-                if sort == 1:
-                    Dict.setdefault("data_login", []).append(f"{data}:{password}")
-                    if parse_full == True:
-                        Dict.setdefault("data_login_full_line", []).append(line)
-                elif sort == 2:
-                    Dict.setdefault("data", []).append(f"{data}:{password}")
-                    if parse_full == True:
-                        Dict.setdefault("data_full_line", []).append(line)
-            elif number_regex.match(data) and all(bad not in data for bad in bad_char) and 6 <= len(data) <= 15:
-                number += 1
-                if sort == 1:
-                    Dict.setdefault("data_number", []).append(f"{data}:{password}")
-                    if parse_full == True:
-                        Dict.setdefault("data_number_full_line", []).append(line)
-                elif sort == 2:
-                    Dict.setdefault("data", []).append(f"{data}:{password}")
-                    if parse_full == True:
-                        Dict.setdefault("data_full_line", []).append(line)
+            if email_parse == True:
+                if email_regex.match(data) and len(data) >= 9:
+                    email += 1
+                    if sort == 1:
+                        Dict.setdefault("data_email", []).append(f"{data}:{password}")
+                        if parse_full == True:
+                            Dict.setdefault("data_email_full_line", []).append(line)
+                    elif sort == 2:
+                        Dict.setdefault("data", []).append(f"{data}:{password}")
+                        if parse_full == True:
+                            Dict.setdefault("data_full_line", []).append(line)
+            elif login_parse == True:
+                if login_regex.match(data) and all(bad not in data for bad in bad_char):
+                    login += 1
+                    if sort == 1:
+                        Dict.setdefault("data_login", []).append(f"{data}:{password}")
+                        if parse_full == True:
+                            Dict.setdefault("data_login_full_line", []).append(line)
+                    elif sort == 2:
+                        Dict.setdefault("data", []).append(f"{data}:{password}")
+                        if parse_full == True:
+                            Dict.setdefault("data_full_line", []).append(line)
+            elif number_parse == True:
+                if number_regex.match(data) and all(bad not in data for bad in bad_char) and 6 <= len(data) <= 15:
+                    number += 1
+                    if sort == 1:
+                        Dict.setdefault("data_number", []).append(f"{data}:{password}")
+                        if parse_full == True:
+                            Dict.setdefault("data_number_full_line", []).append(line)
+                    elif sort == 2:
+                        Dict.setdefault("data", []).append(f"{data}:{password}")
+                        if parse_full == True:
+                            Dict.setdefault("data_full_line", []).append(line)
         check_size(size)
-
 #Функция чтения блока данных полученных от функции read_file
 def process_chunk(chunk):
     global all_line
@@ -171,7 +182,13 @@ while True:
 
 #Начало работы скрипта
 clear()
-print(f"Настройка текущей сессии:\nПапка с файлами: {base}\nПарсим: всё\nТип сортировки: {'Три файла' if sort == 1 else 'Всё в один файл'}\nПарс строк: {'Да' if parse_full == True else 'Нет'}\n{'Запрос: ' + ' | '.join(zapros) if parse_zapros == True else ''}")
+print("Настройка текущей сессии:")
+print(f"Папка с файлами: {base}")
+print(f"Парсим: {'Всё' if parse_zapros == False else 'Запросы'}")
+print(f"Тип сортировки: {'Три файла' if sort == 1 else 'Всё в один файл'}")
+print(f"Какие пары парсим: {'email:pass' if email_parse == True else ''} {'login:pass' if login_parse == True else ''} {'number:pass' if number_parse == True else ''}")
+print(f"Парс полных строк: {'Да' if parse_full == True else 'Нет'}")
+print(f"{'Запрос: '+' | '.join(zapros) if parse_zapros == True else ''}")
 for txt in gl(f"{base}/*.txt"):
     email = 0
     login = 0
@@ -181,7 +198,14 @@ for txt in gl(f"{base}/*.txt"):
     size_file_mb = size_file_bytes / (1024 * 1024)
     size_files += size_file_mb
     read_file(txt)
-    print(f"{txt} | mail:pass: {email} | login:pass: {login} | number:pass: {number} | all found: {email+login+number} | count line: {all_line} | size file: {round(size_file_mb)}mb")
+    mail_count = f" | mail:pass: {email}"
+    login_count = f" |login:pass: {login}"
+    number_count = f" | number:pass: {number}"
+    if (email_parse and not login_parse and not number_parse) or (email_parse and not login_parse and not number_parse) or (email_parse and not login_parse and not number_parse):
+        all_result = ''
+    else:
+        all_result = f" | all found: {email+login+number}"
+    print(f"{txt}{mail_count if email_parse == True else ''}{login_count if login_parse == True else ''}{number_count if number_parse == True else ''}{all_result} | count line: {all_line} | size file: {round(size_file_mb)}mb")
     write()
 end = time.time() - start
 minut = int(end // 60)

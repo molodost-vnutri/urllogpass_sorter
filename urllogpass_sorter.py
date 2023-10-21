@@ -120,7 +120,7 @@ def sorting(data, password, line, size):
                         Dict.setdefault("data", []).append(f"{data}:{password}")
                         if parse_full == True:
                             Dict.setdefault("data_full_line", []).append(line)
-            elif login_parse == True:
+            if login_parse == True:
                 if login_regex.match(data) and all(bad not in data for bad in bad_char):
                     login += 1
                     if sort == 1:
@@ -131,7 +131,7 @@ def sorting(data, password, line, size):
                         Dict.setdefault("data", []).append(f"{data}:{password}")
                         if parse_full == True:
                             Dict.setdefault("data_full_line", []).append(line)
-            elif number_parse == True:
+            if number_parse == True:
                 if number_regex.match(data) and all(bad not in data for bad in bad_char) and 6 <= len(data) <= 15:
                     number += 1
                     if sort == 1:

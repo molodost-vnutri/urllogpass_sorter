@@ -1,13 +1,12 @@
 {
-	"zapros": ["zapros", "zapros1"],
-	"parse_zapros": false,
-	"sort": 1,
+	"zapros": ["zapros", "zapros"],
+	"parse_zapros": true,
 	"email_parse": true,
 	"login_parse": true,
 	"number_parse": true,
-	"parse_full": false,
+	"parse_line": false,
 	"bad_char": ["UNKNOWN", "http", "ftp", "FTP", "unknown", "https", "@"],
 	"folder": "Result",
 	"size": 10000,
-	"file_block": 256
+	"file_block": 10
 }

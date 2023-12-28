@@ -53,7 +53,7 @@ def main(file: str) -> [bool, str or int]:
                 block_count += 1
                 for line in block.split('\n'):
                     lines += 1
-                    line = line.replace(' ', ':', 1).replace(';', ':').replace('::', ':').replace('|', ':')
+                    line = line.replace(' ', ':', 1).replace(';', ':').replace('::', ':').replace('|', ':').replace(',', ':')
                     sorting(line)
     except Exception as e:
         return [False, e]

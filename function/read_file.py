@@ -1,82 +1,209 @@
-#Встроенные в python библиотеки
-from json import load
+#Импорт библиотек
+import os
+import io
+import sys
+import json
+import time
+try:
+    import regex as re
+except:
+    os.system("pip install regex")
+    import regex as re
+from glob import glob as gl
 
-# Модули из папки function
-from function import check_cred, check_line_reg, split_ulp, check_folder # Проверка data:password, проверка ulp, получение data:password, получения папки результатов
+#Получение настроек из файла конфигурации
+with open("config.json", 'r') as config_file:
+    config = json.load(config_file)
+zapros = config["zapros"]
+sort = config["sort"]
+parse_full = config["parse_full"]
+bad_char = config["bad_char"]
+parse_zapros = config["parse_zapros"]
+folder = config["folder"]
+size = config["size"]
+file_block = config["file_block"]
+email_parse = config["email_parse"]
+login_parse = config["login_parse"]
+number_parse = config["number_parse"]
+#Проверка существования папки и назначение пути сохранения
+os.mkdir(folder) if not os.path.exists(folder) else None
+Result_folder = os.path.join(os.getcwd(), folder)
 
-# Парсим значения json файла config.json
-with open('config.json') as config_file:
-    config = load(config_file)
+#Объявляем переменные
+Dict = {key: [] for key in zapros}
+all_line= 0
+size_files = 0
 
-file_block = config['file_block'] # int (Сколько строк будет загружено за один блок)
-parse_zapros =  config['parse_zapros'] # True/False (Парсинг запроса)
-zapros = config['zapros'] #[] (Запросы для парсинга)
-parse_line = config['parse_line'] # True/False (Парсинг полной строки)
-size = config['size'] # int (Колличество элементов в словаре)
+#Регулярные выражения
+email_regex = re.compile(r"^\S+@\S+\.\S+$")
+login_regex = re.compile(r"^[a-zA-Z][a-zA-Z0-9_-]*$")
+number_regex = re.compile(r"^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$")
+password_regex = re.compile(r"^[ -~]+$")
 
-# Получаем путь до папки с результатами
-folder = check_folder.main()
+#Функция очистки консоли
+def clear():
+    os.system("cls") if os.name == "nt" else os.system("clear")
+    print("       Сортировщик url:login:password v0.5\n              сделал molodost_vnutri\n             для форума zelenka.guru\n      https://zelenka.guru/molodost_vnutri\n")
 
-# Создаём словарь вида
-# {key: [data, data]
-#  key: [data, data]}
-Dict = {key: [] for key in zapros} 
+#Функция проверки строки на валидность
+def is_valid_line(line):
+    parts = line.strip().split(":")
+    return len(parts) == 2
 
-# Функция для записи данных из словарей в файлы, ничего не возвращает
-def write() -> None:
+#Функция записи данных в файлы
+def write():
     global Dict
     for key, values in Dict.items():
-        if values: # Если в ключе есть какие-то значения, значит создаём файл (для того чтобы не было пустых папок)
-            with open(f'{folder}/{key}.txt', 'a', encoding='utf-8', errors='ignore') as file:
+        if values:  # Проверка, есть ли значения в словаре
+            with open(f"{folder}/{key}.txt", "a", errors='ignore') as file:
                 for value in values:
-                    file.write(f'{value}\n')
-    # Очищаем словарь
-    Dict = {key: [] for key in zapros}
+                    file.write(value + "\n")
+    Dict.clear()
 
-# Функция проверяет чтобы колличество элементов не превышало допустимого значения, ничего не возвращает
-def check_size() -> None:
+#Проверка заполненности словаря
+def check_size(size):
+    global Dict
     dict_count = sum(len(values) for values in Dict.values())
-    if dict_count >= size: # Если словарь достиг максимума, то вызываем функцию write()
+    if dict_count >= size:
         write()
+        Dict = {key: [] for key in zapros}
 
-# Функция принимающая путь до файла в виде аргумента и возвращает [bool, msg/int], в случае успешной обработки возвращает [True, count line], в противном случае [False, error msg]
-def main(file: str) -> [bool, str or int]:
-    lines = 0
-    try:
-        block_count = 0
-        with open(file, encoding='utf-8', errors='ignore') as file_read:
-            while True:
-                block = file_read.read(file_block * 1024 * 1024)
-                if not block:
-                    write()
-                    return [True, lines]
-                block_count += 1
-                for line in block.split('\n'):
-                    lines += 1
-                    line = line.replace(' ', ':', 1).replace(';', ':').replace('::', ':').replace('|', ':').replace(',', ':')
-                    sorting(line)
-    except Exception as e:
-        return [False, e]
+#Функция сортировки строк
+def sorting(data, password, line, size):
+    global email, login, number, Dict
+    if 5 <= len(password) <= 25 and password_regex.match(password) and 5 <= len(data):
+        if parse_zapros == True:
+            for key in zapros:
+                if key in line:
+                    if email_parse == True:
+                        if email_regex.match(data) and len(data) >= 9:
+                            email += 1
+                            if sort == 1:
+                                Dict.setdefault(f"{key}_email", []).append(f"{data}:{password}")
+                                if parse_full == True:
+                                    Dict.setdefault(f"{key}_email_full_line", []).append(line)
+                            elif sort == 2:
+                                Dict.setdefault(key, []).append(f"{data}:{password}")
+                                if parse_full == True:
+                                    Dict.setdefault(f"{key}_full_line", []).append(line)
+                    if login_parse == True:
+                        if login_regex.match(data) and all(bad not in data for bad in bad_char):
+                            login += 1
+                            if sort == 1:
+                                Dict.setdefault(f"{key}_login", []).append(f"{data}:{password}")
+                                if parse_full == True:
+                                    Dict.setdefault(f"{key}_login_full_line", []).append(line)
+                            elif sort == 2:
+                                Dict.setdefault(key, []).append(f"{data}:{password}")
+                                if parse_full == True:
+                                    Dict.setdefault(f"{key}_full_line", []).append(line)
+                    if number_parse == True:
+                        if number_regex.match(data) and all(bad not in data for bad in bad_char) and 6 <= len(data) <= 15:
+                            number += 1
+                            if sort == 1:
+                                Dict.setdefault(f"{key}_number", []).append(f"{data}:{password}")
+                                if parse_full == True:
+                                    Dict.setdefault(f"{key}_number_full_line", []).append(line)
+                            elif sort == 2:
+                                Dict.setdefault(key, []).append(f"{data}:{password}")
+                                if parse_full == True:
+                                    Dict.setdefault(f"{key}_full_line", []).append(line)
+        if parse_zapros == False:
+            if email_parse == True:
+                if email_regex.match(data) and len(data) >= 9:
+                    email += 1
+                    if sort == 1:
+                        Dict.setdefault("data_email", []).append(f"{data}:{password}")
+                        if parse_full == True:
+                            Dict.setdefault("data_email_full_line", []).append(line)
+                    elif sort == 2:
+                        Dict.setdefault("data", []).append(f"{data}:{password}")
+                        if parse_full == True:
+                            Dict.setdefault("data_full_line", []).append(line)
+            if login_parse == True:
+                if login_regex.match(data) and all(bad not in data for bad in bad_char):
+                    login += 1
+                    if sort == 1:
+                        Dict.setdefault("data_login", []).append(f"{data}:{password}")
+                        if parse_full == True:
+                            Dict.setdefault("data_login_full_line", []).append(line)
+                    elif sort == 2:
+                        Dict.setdefault("data", []).append(f"{data}:{password}")
+                        if parse_full == True:
+                            Dict.setdefault("data_full_line", []).append(line)
+            if number_parse == True:
+                if number_regex.match(data) and all(bad not in data for bad in bad_char) and 6 <= len(data) <= 15:
+                    number += 1
+                    if sort == 1:
+                        Dict.setdefault("data_number", []).append(f"{data}:{password}")
+                        if parse_full == True:
+                            Dict.setdefault("data_number_full_line", []).append(line)
+                    elif sort == 2:
+                        Dict.setdefault("data", []).append(f"{data}:{password}")
+                        if parse_full == True:
+                            Dict.setdefault("data_full_line", []).append(line)
+        check_size(size)
+#Функция чтения блока данных полученных от функции read_file
+def process_chunk(chunk):
+    global all_line
+    lines = chunk.split('\n')
+    for line in lines:
+        all_line += 1
+        line = line.replace(" ", ":")
+        filtered_line = ":".join(line.strip().split(":")[-2:])
+        if is_valid_line(filtered_line):
+            data, password = filtered_line.split(":")
+            sorting(data, password, line, size)
 
-# Функция сортировки, принимает в виде аргумента строку, ничего не возвращает
-def sorting(line: str) -> None:
-    check_size() # Функция проверки колличества элементов в словаре
-    if check_line_reg.main(line): # Проверяем подходит ли строка по формату http(s)://u:l:p
-        if parse_zapros: # Если работа с запросами
-            for key in zapros: #Проходим по запросам
-                if key in line: 
-                    result_check = split_ulp.main(line) 
-                    if result_check[0] != False:
-                        result_cred = check_cred.main(result_check[0], result_check[1])
-                        if result_cred[0]:
-                            Dict.setdefault(f'{key}_{result_cred[1]}', []).append(f'{result_check[0]}:{result_check[1]}')
-                            if parse_line:
-                                Dict.setdefault(f'{key}_{result_cred[1]}_line', []).append(line)
-        else:
-            result_check = split_ulp.main(line)
-            if result_check:
-                result_cred = check_cred.main(result_check[0], result_check[1])
-                if result_cred[0]:
-                    Dict.setdefault(result_cred[1], []).append(f'{result_check[0]}:{result_check[1]}')
-                    if parse_line:
-                        Dict.setdefault(f'{result_cred[1]}_line', []).append(line)
+#Функция читающая файл и отправляющая чанки в функцию process_chunk
+def read_file(txt):
+    with open(txt, encoding='utf-8', errors='ignore') as file:
+        while True:
+            block = file.read(file_block * 1024 * 1024)
+            if not block:
+                break
+            process_chunk(block)
+    write()
+
+#Получение пути с файлами от пользователя
+while True:
+    clear()
+    base = input(r"""Работает drag and drop
+[Папка с txt]=> """)
+    base = base.replace('"', '') if '"' in base else base.replace("'", "")
+    if os.path.exists(base):
+        break
+    input("Папка не найдена")
+
+#Начало работы скрипта
+clear()
+print("Настройка текущей сессии:")
+print(f"Папка с файлами: {base}")
+print(f"Парсим: {'Всё' if parse_zapros == False else 'Запросы'}")
+print(f"Тип сортировки: {'Три файла' if sort == 1 else 'Всё в один файл'}")
+print(f"Какие пары парсим: {'email:pass' if email_parse == True else ''} {'login:pass' if login_parse == True else ''} {'number:pass' if number_parse == True else ''}")
+print(f"Парс полных строк: {'Да' if parse_full == True else 'Нет'}")
+print(f"{'Запрос: '+' | '.join(zapros) if parse_zapros == True else ''}")
+for txt in gl(f"{base}/*.txt"):
+    email = 0
+    login = 0
+    number = 0
+    start = time.time()
+    size_file_bytes = os.stat(txt).st_size
+    size_file_mb = size_file_bytes / (1024 * 1024)
+    size_files += size_file_mb
+    read_file(txt)
+    mail_count = f" | mail:pass: {email}"
+    login_count = f" |login:pass: {login}"
+    number_count = f" | number:pass: {number}"
+    if (email_parse and not login_parse and not number_parse) or (email_parse and not login_parse and not number_parse) or (email_parse and not login_parse and not number_parse):
+        all_result = ''
+    else:
+        all_result = f" | all found: {email+login+number}"
+    print(f"{txt}{mail_count if email_parse == True else ''}{login_count if login_parse == True else ''}{number_count if number_parse == True else ''}{all_result} | count line: {all_line} | size file: {round(size_file_mb)}mb")
+    write()
+end = time.time() - start
+minut = int(end // 60)
+seconds = end % 60
+second = round(seconds,2)
+input(f"Скрипт закончил работу за {minut} минут и {second} секунд\nОбработано {round(size_files)}мб")

@@ -1,2 +1,2 @@
-colorama
-regex
+colorama == 0.4.6
+regex == 2023.12.25

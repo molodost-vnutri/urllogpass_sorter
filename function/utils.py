@@ -21,4 +21,4 @@ def logo() -> None:
              [{COLOR.GREEN}Форум{COLOR.RESET}]=> https://zelenka.guru/members/3060240
              [{COLOR.GREEN}Тема на форуме{COLOR.RESET}]=> https://zelenka.guru/threads/5830632
              [{COLOR.LIGHTBLACK_EX}Github{COLOR.RESET}]=> https://github.com/molodost-vnutri/urllogpass_sorter
-         Версия: {COLOR.GREEN}0.8{COLOR.RESET}\n\n''')
+         Версия: {COLOR.GREEN}0.9{COLOR.RESET}\n\n''')

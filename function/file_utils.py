@@ -104,7 +104,7 @@ def read_chunk(config: dict, chunk: list) -> list:
     login_regex = regex.compile(r"^[a-zA-Z][a-zA-Z0-9_-]*$")
     number_regex = regex.compile(r"^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$")
     
-    chunk = chunk.decode().split("\r\n")
+    chunk = chunk.decode().split("\n")
     all_len = len(chunk)
     for _, line in enumerate(chunk):
         if config["parse_zapros"]:

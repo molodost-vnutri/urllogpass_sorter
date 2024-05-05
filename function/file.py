@@ -74,19 +74,19 @@ def read_file(file: str) -> list:
                             case 0:
                                 database.setdefault(f"{status}_email", set()).add(f"{data}:{password}")
                                 if config["parse_full"]:
-                                    database.setdefault(f"{status}_email_full", set()).add(f"https://{url}:{data}:{password}")
+                                    database.setdefault(f"{status}_email_full", set()).add(f"{url}:{data}:{password}")
                             case 1:
                                 database.setdefault(f"{status}_login", set()).add(f"{data}:{password}")
                                 if config["parse_full"]:
-                                    database.setdefault(f"{status}_login_full", set()).add(f"https://{url}:{data}:{password}")
+                                    database.setdefault(f"{status}_login_full", set()).add(f"{url}:{data}:{password}")
                             case 2:
                                 database.setdefault(f"{status}_number", set()).add(f"{data}:{password}")
                                 if config["parse_full"]:
-                                    database.setdefault(f"{status}_number_full", set()).add(f"https://{url}:{data}:{password}")
+                                    database.setdefault(f"{status}_number_full", set()).add(f"{url}:{data}:{password}")
                             case 3:
                                 database.setdefault(f"{status}_all_datas", set()).add(f"{data}:{password}")
                                 if config["parse_full"]:
-                                    database.setdefault(f"{status}_all_datas_full", set()).add(f"https://{url}:{data}:{password}")
+                                    database.setdefault(f"{status}_all_datas_full", set()).add(f"{url}:{data}:{password}")
 
         if not config["parse_zapros"]:
             for index, line in enumerate(file_read):
@@ -102,19 +102,19 @@ def read_file(file: str) -> list:
                         case 0:
                             database.setdefault("email", set()).add(f"{data}:{password}")
                             if config["parse_full"]:
-                                database.setdefault("email_full", set()).add(f"https://{url}:{data}:{password}")
+                                database.setdefault("email_full", set()).add(f"{url}:{data}:{password}")
                         case 1:
                             database.setdefault("login", set()).add(f"{data}:{password}")
                             if config["parse_full"]:
-                                database.setdefault("login_full", set()).add(f"https://{url}:{data}:{password}")
+                                database.setdefault("login_full", set()).add(f"{url}:{data}:{password}")
                         case 2:
                             database.setdefault("number", set()).add(f"{data}:{password}")
                             if config["parse_full"]:
-                                database.setdefault("number_full", set()).add(f"https://{url}:{data}:{password}")
+                                database.setdefault("number_full", set()).add(f"{url}:{data}:{password}")
                         case 3:
                             database.setdefault("all_datas", set()).add(f"{data}:{password}")
                             if config["parse_full"]:
-                                database.setdefault("all_datas_full", set()).add(f"https://{url}:{data}:{password}")
+                                database.setdefault("all_datas_full", set()).add(f"{url}:{data}:{password}")
     all_find += write_result(database=database, folder=folder)
     return [all_find, all_lines]
 

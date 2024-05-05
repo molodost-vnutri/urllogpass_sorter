@@ -1,4 +1,14 @@
-import function.file_utils as file
+from function.user_input import get_path
+from function.file import read_paths
+import time
 
-path = file.get_path()
-file.main(path)
+start = time.time()
+
+files = get_path()
+
+read_paths(files)
+end = time.time() - start
+minut = int(end // 60)
+seconds = end % 60
+second = round(seconds,2)
+input(f"Скрипт закончил работу за {minut} минут и {second} секунд")

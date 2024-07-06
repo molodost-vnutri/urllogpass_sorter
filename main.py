@@ -1,14 +1,7 @@
-from function.user_input import get_path
-from function.file import read_paths
-import time
+from modules.json import JsonLoad
+from modules.GUI import Application
 
-start = time.time()
 
-files = get_path()
+config = JsonLoad.__create_config__()
 
-read_paths(files)
-end = time.time() - start
-minut = int(end // 60)
-seconds = end % 60
-second = round(seconds,2)
-input(f"Скрипт закончил работу за {minut} минут и {second} секунд")
+Application().mainloop()

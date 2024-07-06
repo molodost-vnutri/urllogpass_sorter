@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "sorter"
+version = "1.1.0"
+description = ""
+authors = ["Molodost_vnutri"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pydantic = "^2.8.2"
+psutil = "^6.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

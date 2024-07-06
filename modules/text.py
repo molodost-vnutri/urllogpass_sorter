@@ -67,7 +67,7 @@ class Text(SText):
 
         del parts
 
-        if self.typedata != 1:
+        if self.typeulp != 1:
             try:
                 host = urlparse(url)
                 if host.hostname is not None:

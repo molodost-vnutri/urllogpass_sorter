@@ -97,7 +97,7 @@ class Application(tk.Tk):
     
     def save(self):
         data = {
-            "zapros": [self.fields["zapros"].get()],
+            "zapros": self.fields["zapros"].get().split(' '),
             "parse_zapros": self.fields["parse_zapros"].get(),
             "parse_email": self.fields["parse_email"].get(),
             "parse_login": self.fields["parse_login"].get(),

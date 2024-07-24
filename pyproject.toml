@@ -1,15 +1,17 @@
 [tool.poetry]
-name = "sorter"
-version = "1.1.0"
-description = ""
-authors = ["Molodost_vnutri"]
+name = "urllogpass-sorter"
+version = "1.2"
+description = "Предназначен для личного использования"
+authors = ["molodost-vnutri <90547216+molodost-vnutri@users.noreply.github.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
-pydantic = "^2.8.2"
-psutil = "^6.0.0"
+python = "^3.12"
 
+[tool.poetry.group.dev.dependencies]
+pydantic = "^2.8.2"
+regex = "^2024.5.15"
+colorama = "^0.4.6"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,116 +1,89 @@
-import concurrent.futures
-import os
-from typing import Union, Optional
 from datetime import datetime
+from os import walk, makedirs
+from os.path import exists, getsize, isdir, isfile, join
 
-from modules.shemas import SFileResult, SJson, SUlp
-from modules.text import Text
-from modules.json import JsonLoad
-from modules.config_cpu import ConfigCpu
+from colorama import Fore, init
+from ctypes import windll
 
-class ChunkProcessor:
-    def __init__(self, chunk: list[str], config: SJson, threads: int):
-        self.chunks: list[str] = chunk
-        self.config: SJson = config
-        self.threads: int = threads
-    
-    def __chunkify__(self):
-        chunk_size = len(self.chunks) // self.threads
-        for i in range(0, len(self.chunks), chunk_size):
-            yield self.chunks[i:i + chunk_size]
-    
-    def __read_chunk__(self, chunk: list[str]):
-        result_lines: dict = {}
-        if self.config.parse_zapros:
-            for _, line in enumerate(chunk):
-                for _, zapros in enumerate(self.config.zapros):
-                    if zapros in line.lower():
-                        result: Optional[SUlp] = Text(ulp=line, config=self.config).get()
-                        if result is not None:
-                            result_lines.setdefault(f'{zapros}_{result.typedata}', set()).add(result.extract_credit())
-                            if self.config.parse_full:
-                                result_lines.setdefault(f'{zapros}_{result.typedata}_{result.typeulp}_full', set()).add(result.extract_full_line())
-        else:
-            for _, line in enumerate(chunk):
-                result: Optional[SUlp] = Text(ulp=line, config=self.config).get()
-                if result is not None:
-                    result_lines.setdefault(f'{result.typedata}', set()).add(result.extract_credit())
-                    if self.config.parse_full:
-                        result_lines.setdefault(f'{result.typedata}_{result.typeulp}_full', set()).add(result.extract_full_line())
-        return result_lines
-    
-    def process(self):
-        chunks = list(self.__chunkify__())
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as executor:
-            results = list(executor.map(self.__read_chunk__, chunks))
-        finalresult: dict = {}
-        find: int = 0
-        for key, value in results[0].items():
-            if not str(key).endswith('full'):
-                find += len(value)
-            if key not in finalresult and value:
-                finalresult[key] = set()
-            if value: finalresult[key].update(value)
-        return [finalresult, find]
+from modules.json_module import JsonLoad
+from modules.logo import logo
+from modules.shemas import SConfig
 
-class FileExtractor:
+init()
+
+time = datetime.now().strftime("%Y-%m-%d")
+
+config: SConfig = JsonLoad().config
+
+class FileIo:
     def __init__(self, path: str):
         self.path: str = path
-        self.config: SJson = JsonLoad.get()
-        self.threads: int = ConfigCpu(thread_auto=self.config.thread_auto, threads=self.config.threads).get()
-        self.files: list[str] = FileFinder(path=self.path, config=self.config).get()
-        self.buffer: list[str] = []
-        self.results: list[SFileResult] = []
-        self.result: SFileResult
-        self.datetime = datetime.now().strftime('%Y-%m-%d')
+        self.small: bool = True if int(getsize(path) / 1024) else False
     
-    def reading(self):
-        for _, file in enumerate(self.files):
-            self.result = SFileResult(path=file)
-            with open(file, encoding='utf-8', errors='ignore') as filebody:
-                for line in filebody:
-                    self.buffer.append(line.strip())
-                    if len(self.buffer) >= 10000:
-                        self.result.all_lines += len(self.buffer)
-                        result, find = ChunkProcessor(self.buffer, config=self.config, threads=self.threads).process()
-                        self.result.find += find
-                        self.__write_results__(result)
-                        self.buffer.clear()
-                        
-            if self.buffer:
-                self.result.all_lines += len(self.buffer)
-                result, find = ChunkProcessor(self.buffer, config=self.config, threads=self.threads).process()
-                self.result.find += find
-                self.__write_results__(result)
-                self.buffer.clear()
-        self.results.append(self.result)
+    def yield_file_read(self):
+        with open(
+            file=self.path,
+            mode='r',
+            encoding='utf-8',
+            errors='ignore'
+        ) as file:
+            if self.small:
+                yield list(set(line.strip() for line in file.readlines()))
+            while True:
+                chunk = file.readlines(500000)
+                if not chunk: break
+                yield chunk
 
-        return self.results
-    def __write_results__(self, result: dict[str, set]):
-        if not os.path.isdir(self.config.folder):
-            os.mkdir(self.config.folder)
-        if not os.path.isdir(f'{self.config.folder}/{self.datetime}'):
-            os.mkdir(f'{self.config.folder}/{self.datetime}')
-        for key, value in result.items():
-            with open(f'{self.config.folder}/{self.datetime}/{key}.txt', mode='a+', encoding='utf-8') as result_file:
-                for res in value:
-                    result_file.write(f'{res}\n')
+class FolderSearch:
+    def __init__(self, path: str):
+        self.files = []
+        if isfile(path):
+            self.files.append(path)
+        else:
+            for root, _, files in walk(path):
+                self.files.extend([join(root, file) for file in files if file.endswith('.txt')])
 
-class FileFinder:
-    def __init__(self, path: str, config: SJson):
-        self.path: str = path
-        self.files: list[str] = []
-        self.config: SJson = config
+def write_results(results: dict):
+    folder = join(config.folder, time)
+    if not isdir(folder):
+        makedirs(folder)
+    for key, value in results.items():
+        if value:
+            with open(file=join(folder, key+'.txt'),
+                      mode='a',
+                      encoding='utf-8',
+                      errors='ignore') as file:
+                for line in value:
+                    file.write(line+'\n')
 
-    def get(self) -> Union[list[None], list[str]]:
-        if os.path.isfile(self.path):
-            self.files.append(self.path)
-            return self.files
-        for root, dirs, files in os.walk(self.path):
-            if self.config.folder in dirs:
-                continue
-            for file in files:
-                path = f'{root}/{file}'
-                if path.endswith('.txt'):
-                    self.files.append(path)
-        return self.files
+def get_path() -> str:
+    while True:
+        print(logo)
+        windll.kernel32.SetConsoleTitleW("Работает drag&drop")
+        base = input('[Для выхода из скрипта напишите exit]\n[Path]=> ').replace('"', '').replace("& '", '').replace("'", '')
+        if exists(base):
+            return base
+        if base.lower() == 'exit': exit()
+        input(f'[{Fore.YELLOW}*{Fore.RESET}] путь до {base} не найден, проверьте правильность пути и попробуйте снова')
+def load_settings(path: str) -> list[str]:
+    if not isfile(path):
+        with open(
+            file=path,
+            mode='a',
+            encoding="utf-8",
+        ) as file:
+            if path == "zapros.txt":
+                file.writelines([line+'\n' for line in ['zapros1', 'zapros2']])
+            if path == "bad_list.txt":
+                file.writelines([line+'\n' for line in ['unknown', 'null']])
+            if path == "repl_list.txt":
+                file.writelines([line+'\n' for line in [';', '|', ' ']])
+    with open(
+        file=path,
+        mode='r',
+        encoding="utf-8"
+    ) as file:
+        return [line.strip().lower() for line in file if line.strip()]
+
+zapros_list = load_settings('zapros.txt')
+bad_list = load_settings('bad_list.txt')

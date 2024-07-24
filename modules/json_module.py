@@ -21,8 +21,6 @@ class JsonLoad:
                 "password_len": [8, 25],
                 "thread_auto": True,
                 "threads": 4,
-                "repl_list": [';', ' ', '|'],
-                "buffer": 10000,
                 "folder": "Result"
             }
             with open(

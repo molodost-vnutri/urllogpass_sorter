@@ -29,9 +29,11 @@ class Text(SText):
         if not self.__isascii__():
             self.valid = False
             return
-        if any(bad in self.ulp for bad in bad_list):
+        ulp = self.ulp.lower()
+        if any(bad in ulp for bad in bad_list):
             self.valid = False
             return
+        del ulp
     def __get_typeulp__(self):
         if self.ulp.startswith("http"): self.typeulp = 0
         elif self.ulp.startswith("android://"): self.typeulp = 1

@@ -28,10 +28,10 @@ class Loader:
         
         if path.is_dir():
             paths: list[Path] = []
-            for _, _, files in path.walk():
+            for root, _, files in path.walk():
                 for file in files:
                     if file.endswith('.txt'):
-                        paths.append(file)
+                        paths.append(root.joinpath(file))
             return paths
         
         raise ValueError('Указанный путь не является директорией или файлом')
